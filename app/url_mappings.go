@@ -1,10 +1,13 @@
 package app
 
-import "github.com/frediohash/bookstore_users-api/controllers"
+import (
+	"github.com/frediohash/bookstore_users-api/controllers/ping"
+	"github.com/frediohash/bookstore_users-api/controllers/users"
+)
 
 func mapUrls() {
-	router.GET("/ping", controllers.Ping)
-	router.POST("/user", controllers.CreateUser)
-	router.GET("/user", controllers.FindUser)
-	router.GET("/user/:id", controllers.GetUser)
+	router.GET("/ping", ping.Ping)
+	router.POST("/user", users.CreateUser)
+	router.GET("/user", users.FindUser)
+	router.GET("/user/:id", users.GetUser)
 }
