@@ -8,6 +8,7 @@ import (
 
 	"github.com/frediohash/bookstore_users-api/domain/users"
 	"github.com/frediohash/bookstore_users-api/services"
+	"github.com/frediohash/bookstore_users-api/utils/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,15 +21,23 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 	if err := json.Unmarshal(bytes, &user); err != nil {
-		fmt.Println(err.Error())
+		// fmt.Println(err.Error())
 		return
 	}
 	if err := c.ShouldBindJSON(&user); err != nil {
+		// restErr := errors.NewBadRequestError("invalid json body"){
+		restErr := errors.RestErr{
+			Message: "invalid json body",
+			Status:  http.StatusBadRequest,
+			Error:   "bad_request",
+		}
+		c.JSON(restErr.Status, restErr)
 		fmt.Println(err)
 		return
 	}
 	result, saveErr := services.CreateUser(user)
 	if saveErr != nil {
+		c.JSON(saveErr.Status, saveErr)
 		return
 	}
 	fmt.Println(user)
