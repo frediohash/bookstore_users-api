@@ -2,6 +2,7 @@ package users
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/frediohash/bookstore_users-api/utils/errors"
 )
@@ -35,6 +36,10 @@ func (user *User) Save() *errors.RestErr {
 		}
 		return errors.NewBadRequestError(fmt.Sprintf("user %d already exist", user.Id))
 	}
+
+	now := time.Now()
+	user.DateCreated = now.Format("2006-01-02T15:04:05Z")
+
 	usersDB[user.Id] = user
 	return nil
 }
