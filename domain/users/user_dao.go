@@ -10,33 +10,34 @@ import (
 )
 
 const (
-	queryInsertUser  = ("INSERT INTO users (first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);")
+	errorNoRows      = "no rows in result set"
 	indexUniqueEmail = "unique_Email"
+	queryInsertUser  = ("INSERT INTO users (first_name, last_name, email, date_created) VALUES (?, ?, ?, ?);")
+	queryGetUser     = ("SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?")
 )
 
-// buat map akses database
-var (
-	usersDB = make(map[int64]*User)
-)
-
-// untuk ke database
+// get all dari database
 func (user *User) Get() *errors.RestErr {
-	if err := users_db.Client.Ping(); err != nil {
-		panic(err)
+	stmt, err := users_db.Client.Prepare(queryGetUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
 	}
-	result := usersDB[user.Id]
-	if result == nil {
-		return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.Id))
+	defer stmt.Close()
+	result := stmt.QueryRow(user.Id)
+	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+		if strings.Contains(err.Error(), errorNoRows) {
+				return errors.NewNotFoundError(
+					fmt.Sprintf("user %s not found", user.Id)
+				)
+		}
+		fmt.Println(err)
+		return errors.NewInternalServerError(
+			fmt.Sprintf("error when trying to get user %d: %s", user.Id, err.Error()))
 	}
-	user.Id = result.Id
-	user.FirstName = result.FirstName
-	user.LastName = result.LastName
-	user.Email = result.Email
-	user.DateCreated = result.DateCreated
-
 	return nil
 }
 
+// save ke database
 func (user *User) Save() *errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryInsertUser)
 	if err != nil {
@@ -61,7 +62,30 @@ func (user *User) Save() *errors.RestErr {
 	return nil
 }
 
-// yang pertama tanpa database
+// buat map akses database
+// var (
+// 	usersDB = make(map[int64]*User)
+// )
+
+// get yang pertama tanpa database
+// func (user *User) Get() *errors.RestErr {
+// 	if err := users_db.Client.Ping(); err != nil {
+// 		panic(err)
+// 	}
+// 	result := usersDB[user.Id]
+// 	if result == nil {
+// 		return errors.NewNotFoundError(fmt.Sprintf("user %d not found", user.Id))
+// 	}
+// 	user.Id = result.Id
+// 	user.FirstName = result.FirstName
+// 	user.LastName = result.LastName
+// 	user.Email = result.Email
+// 	user.DateCreated = result.DateCreated
+
+// 	return nil
+// }
+
+// save yang pertama tanpa database
 // func (user *User) Save() *errors.RestErr {
 // 	stmt, err := users_db.Client.Prepare(queryInsertUser)
 // 	if err != nil {
