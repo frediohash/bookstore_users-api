@@ -2,12 +2,11 @@ package users
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/frediohash/bookstore_users-api/datasources/mysql/users_db"
 	"github.com/frediohash/bookstore_users-api/utils/errors"
 	"github.com/frediohash/bookstore_users-api/utils/errors/date_utils"
-	"github.com/go-sql-driver/mysql"
+	"github.com/frediohash/bookstore_users-api/utils/mysql_utils"
 )
 
 const (
@@ -26,18 +25,22 @@ func (user *User) Get() *errors.RestErr {
 	defer stmt.Close()
 	result := stmt.QueryRow(user.Id)
 	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); getErr != nil {
+		return mysql_utils.ParseError(getErr)
+		//1
 		// sqlErr, ok := getErr.(*mysql.MySQLError)
 		// if !ok {
 		// 	return errors.NewInternalServerError(fmt.Sprintf("error when trying get user: %s", getErr.Error()))
 		// }
 		// fmt.Println(sqlErr)
-		if strings.Contains(err.Error(), errorNoRows) {
-			return errors.NewNotFoundError(
-				fmt.Sprintf("user %d not found", user.Id))
-		}
-		fmt.Println(err)
-		return errors.NewInternalServerError(
-			fmt.Sprintf("error when trying to get user %d: %s", user.Id, getErr.Error()))
+
+		//2
+		// if strings.Contains(err.Error(), errorNoRows) {
+		// 	return errors.NewNotFoundError(
+		// 		fmt.Sprintf("user %d not found", user.Id))
+		// }
+		// fmt.Println(err)
+		// return errors.NewInternalServerError(
+		// 	fmt.Sprintf("error when trying to get user %d: %s", user.Id, getErr.Error()))
 	}
 	return nil
 }
@@ -54,17 +57,23 @@ func (user *User) Save() *errors.RestErr {
 
 	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
 	if saveErr != nil {
-		sqlErr, ok := saveErr.(*mysql.MySQLError)
-		if !ok {
-			return errors.NewInternalServerError(fmt.Sprintf("error when trying save user: %s", err.Error()))
-		}
-		fmt.Println(sqlErr.Number)
-		fmt.Println(sqlErr.Message)
-		switch sqlErr.Number {
-		case 1062:
-			return errors.NewBadRequestError(fmt.Sprintf("email %s already exists", user.Email))
-		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", saveErr.Error()))
+		//because it was define in mysql_utils.go
+		return mysql_utils.ParseError("saveErr")
+
+		//2
+		// sqlErr, ok := saveErr.(*mysql.MySQLError)
+		// if !ok {
+		// 	return errors.NewInternalServerError(fmt.Sprintf("error when trying save user: %s", err.Error()))
+		// }
+		// fmt.Println(sqlErr.Number)
+		// fmt.Println(sqlErr.Message)
+		// switch sqlErr.Number {
+		// case 1062:
+		// 	return errors.NewBadRequestError(fmt.Sprintf("email %s already exists", user.Email))
+		// }
+		// return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", saveErr.Error()))
+
+		//1
 		// if strings.Contains(err.Error(), "email_UNIQUE") {
 		// 	return errors.NewBadRequestError("email %s already exist")
 		// }
