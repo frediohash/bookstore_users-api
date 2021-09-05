@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/frediohash/bookstore_users-api/datasources/mysql/users_db"
+	"github.com/frediohash/bookstore_users-api/utils/date_utils"
 	"github.com/frediohash/bookstore_users-api/utils/errors"
-	"github.com/frediohash/bookstore_users-api/utils/errors/date_utils"
 	"github.com/frediohash/bookstore_users-api/utils/mysql_utils"
 )
 
@@ -58,7 +58,7 @@ func (user *User) Save() *errors.RestErr {
 	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
 	if saveErr != nil {
 		//because it was define in mysql_utils.go
-		return mysql_utils.ParseError("saveErr")
+		return mysql_utils.ParseError(saveErr)
 
 		//2
 		// sqlErr, ok := saveErr.(*mysql.MySQLError)
