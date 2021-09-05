@@ -7,6 +7,7 @@ import (
 	"github.com/frediohash/bookstore_users-api/datasources/mysql/users_db"
 	"github.com/frediohash/bookstore_users-api/utils/errors"
 	"github.com/frediohash/bookstore_users-api/utils/errors/date_utils"
+	"github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -24,15 +25,19 @@ func (user *User) Get() *errors.RestErr {
 	}
 	defer stmt.Close()
 	result := stmt.QueryRow(user.Id)
-	if err := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); getErr != nil {
+		// sqlErr, ok := getErr.(*mysql.MySQLError)
+		// if !ok {
+		// 	return errors.NewInternalServerError(fmt.Sprintf("error when trying get user: %s", getErr.Error()))
+		// }
+		// fmt.Println(sqlErr)
 		if strings.Contains(err.Error(), errorNoRows) {
-				return errors.NewNotFoundError(
-					fmt.Sprintf("user %s not found", user.Id)
-				)
+			return errors.NewNotFoundError(
+				fmt.Sprintf("user %d not found", user.Id))
 		}
 		fmt.Println(err)
 		return errors.NewInternalServerError(
-			fmt.Sprintf("error when trying to get user %d: %s", user.Id, err.Error()))
+			fmt.Sprintf("error when trying to get user %d: %s", user.Id, getErr.Error()))
 	}
 	return nil
 }
@@ -47,12 +52,23 @@ func (user *User) Save() *errors.RestErr {
 
 	user.DateCreated = date_utils.GetNowString()
 
-	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
-	if err != nil {
-		if strings.Contains(err.Error(), "email_UNIQUE") {
-			return errors.NewBadRequestError("email %s already exist")
+	insertResult, saveErr := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if saveErr != nil {
+		sqlErr, ok := saveErr.(*mysql.MySQLError)
+		if !ok {
+			return errors.NewInternalServerError(fmt.Sprintf("error when trying save user: %s", err.Error()))
 		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))
+		fmt.Println(sqlErr.Number)
+		fmt.Println(sqlErr.Message)
+		switch sqlErr.Number {
+		case 1062:
+			return errors.NewBadRequestError(fmt.Sprintf("email %s already exists", user.Email))
+		}
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", saveErr.Error()))
+		// if strings.Contains(err.Error(), "email_UNIQUE") {
+		// 	return errors.NewBadRequestError("email %s already exist")
+		// }
+		// return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))
 	}
 	userId, err := insertResult.LastInsertId()
 	if err != nil {
@@ -62,12 +78,12 @@ func (user *User) Save() *errors.RestErr {
 	return nil
 }
 
-// buat map akses database
+// make map access database
 // var (
 // 	usersDB = make(map[int64]*User)
 // )
 
-// get yang pertama tanpa database
+// first GET without database
 // func (user *User) Get() *errors.RestErr {
 // 	if err := users_db.Client.Ping(); err != nil {
 // 		panic(err)
