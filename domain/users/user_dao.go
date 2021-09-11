@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/frediohash/bookstore_users-api/datasources/mysql/users_db"
+	"github.com/frediohash/bookstore_users-api/logger"
 	"github.com/frediohash/bookstore_users-api/utils/date_utils"
 	"github.com/frediohash/bookstore_users-api/utils/errors"
 	"github.com/frediohash/bookstore_users-api/utils/mysql_utils"
@@ -23,12 +24,17 @@ const (
 func (user *User) Get() *errors.RestErr {
 	stmt, err := users_db.Client.Prepare(queryGetUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("error when trying to prepare get user statement", err)
+		return errors.NewInternalServerError("database error")
+		// return errors.NewInternalServerError(err.Error())
 	}
 	defer stmt.Close()
 	result := stmt.QueryRow(user.Id)
 	if getErr := result.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated, &user.Status); getErr != nil {
-		return mysql_utils.ParseError(getErr)
+		logger.Error("error when trying to get user by id", err)
+		return errors.NewInternalServerError("database error")
+		//3
+		// return mysql_utils.ParseError(getErr)
 		//1
 		// sqlErr, ok := getErr.(*mysql.MySQLError)
 		// if !ok {
