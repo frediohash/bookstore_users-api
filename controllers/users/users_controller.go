@@ -13,10 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestServiceInterface() {
-
-}
-
 func getUserId(userIdParam string) (int64, *errors.RestErr) {
 	userId, userErr := strconv.ParseInt(userIdParam, 10, 64)
 	if userErr != nil {

@@ -1,10 +1,15 @@
 package services
 
 var (
-	ItemsService itemsService = itemsService{}
+	ItemsService itemsServiceInterface = &itemsService{}
 )
 
 type itemsService struct {
+}
+
+type itemsServiceInterface interface {
+	GetItem()
+	SaveItem()
 }
 
 func (s *itemsService) GetItem() {

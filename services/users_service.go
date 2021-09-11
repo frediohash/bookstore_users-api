@@ -12,11 +12,24 @@ import (
 // 	return &user, nil
 // }
 
+// without interface
+// var (
+// 	UsersService usersService = usersService{}
+// )
+
 var (
-	UsersService usersService = usersService{}
+	UsersService userServiceInterface = &usersService{}
 )
 
 type usersService struct {
+}
+
+type userServiceInterface interface {
+	GetUser(userId int64) (*users.User, *errors.RestErr)
+	CreateUser(user users.User) (*users.User, *errors.RestErr)
+	UpdateUser(isPartial bool, user users.User) (*users.User, *errors.RestErr)
+	DeleteUser(userId int64) *errors.RestErr
+	Search(status string) (users.Users, *errors.RestErr)
 }
 
 func (s *usersService) GetUser(userId int64) (*users.User, *errors.RestErr) {
