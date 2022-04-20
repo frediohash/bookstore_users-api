@@ -1,6 +1,8 @@
 package main
 
-import "https://github.com/frediohash/bookstore_users-api"
+import (
+	"github.com/frediohash/bookstore_users-api/app"
+)
 
 func main() {
 	app.StartApplication()
